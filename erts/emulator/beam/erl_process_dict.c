@@ -689,13 +689,13 @@ static Eterm pd_hash_put(Process *p, Eterm id, Eterm value)
     }
     }
     if (HeapWordsLeft(p) < needed) {
-    Eterm root[3];
-    root[0] = id;
-    root[1] = value;
+        Eterm root[3];
+        root[0] = id;
+        root[1] = value;
         root[2] = old_val;
-    erts_garbage_collect(p, needed, root, 3);
-    id = root[0];
-    value = root[1];
+        /* erts_garbage_collect(p, needed, root, 3); */
+        id = root[0];
+        value = root[1];
         old_val = root[2];
         old = *bucket;
     }
