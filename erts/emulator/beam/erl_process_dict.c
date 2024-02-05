@@ -689,7 +689,7 @@ static Eterm pd_hash_put(Process *p, Eterm id, Eterm value)
         }
     }
     if (HeapWordsLeft(p) < needed) {
-        erts_fprintf(stderr, "Process dictionary needs to go into gc. HeapWordsLeft: %T needed:%T\n", HeapWordsLeft(p), needed);
+        erts_fprintf(stderr, "Process dictionary needs to go into gc. HeapWordsLeft: %d needed:%d\n", HeapWordsLeft(p), needed);
         Eterm root[3];
         root[0] = id;
         root[1] = value;
