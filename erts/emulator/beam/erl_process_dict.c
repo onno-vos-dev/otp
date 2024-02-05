@@ -633,11 +633,7 @@ static Eterm pd_hash_put(Process *p, Eterm id, Eterm value)
     Eterm old;
     Eterm old_val = am_undefined;
     Eterm tmp;
-    int needed;
     int new_key = 1;
-#ifdef DEBUG
-    Eterm *hp_limit;
-#endif
 
     if (p->dictionary == NULL) {
     /* Create it */
@@ -652,48 +648,6 @@ static Eterm pd_hash_put(Process *p, Eterm id, Eterm value)
     old = *bucket;
 
     /*
-     * Calculate the number of heap words needed and garbage
-     * collect if necessary. (Might be a slight overestimation.)
-     */
-    needed = 3;            /* {Key,Value} tuple */
-    if (is_boxed(old)) {
-        ASSERT(is_tuple(old));
-        tp = tuple_val(old);
-        if (EQ(tp[1], id)) {
-            old_val = tp[2];
-            if (is_immed(value)) {
-                tp[2] = value;     /* DESTRUCTIVE HEAP ASSIGNMENT */
-                return old_val;
-            }
-            new_key = 0;
-        }
-        else {
-            needed += 2+2;
-        }
-    } else if (is_list(old)) {
-        Eterm* prev_cdr = bucket;
-
-        needed += 2;
-    for (tmp = old; tmp != NIL; prev_cdr = &TCDR(tmp), tmp = *prev_cdr) {
-            tp = tuple_val(TCAR(tmp));
-            if (EQ(tp[1], id)) {
-                old_val = tp[2];
-                if (is_immed(value)) {
-                    tp[2] = value;     /* DESTRUCTIVE HEAP ASSIGNMENT */
-                    return old_val;
-                }
-                new_key = 0;
-                /* Unlink old {Key,Value} from list */
-                *prev_cdr = TCDR(tmp);  /* maybe DESTRUCTIVE HEAP ASSIGNMENT */
-                break;
-            }
-    }
-    }
-#ifdef DEBUG
-    hp_limit = p->htop + needed;
-#endif
-
-    /*
      * Create the {Key,Value} tuple.
      */
     hp = HeapOnlyAlloc(p, 3);
@@ -705,9 +659,7 @@ static Eterm pd_hash_put(Process *p, Eterm id, Eterm value)
     if (is_nil(old)) {
     *bucket = tpl;
     } else if (is_boxed(old)) {
-    ASSERT(is_tuple(old));
     if (!new_key) {
-            ASSERT(EQ(tuple_val(old)[1],id));
         *bucket = tpl;
         return old_val;
     } else {
@@ -716,7 +668,6 @@ static Eterm pd_hash_put(Process *p, Eterm id, Eterm value)
         hp += 2;
         *bucket = CONS(hp, tpl, tmp);
         hp += 2;
-        ASSERT(hp <= hp_limit);
     }
     } else if (is_list(old)) {
         /*
@@ -725,7 +676,6 @@ static Eterm pd_hash_put(Process *p, Eterm id, Eterm value)
     hp = HeapOnlyAlloc(p, 2);
         *bucket = CONS(hp, tpl, *bucket);
     hp += 2;
-    ASSERT(hp <= hp_limit);
     } else {
 #ifdef DEBUG
     erts_fprintf(stderr,
