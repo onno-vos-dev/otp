@@ -657,7 +657,6 @@ static Eterm pd_hash_put(Process *p, Eterm id, Eterm value)
      */
     needed = 3;            /* {Key,Value} tuple */
     if (is_boxed(old)) {
-        ASSERT(is_tuple(old));
         tp = tuple_val(old);
         if (EQ(tp[1], id)) {
             old_val = tp[2];
@@ -698,7 +697,6 @@ static Eterm pd_hash_put(Process *p, Eterm id, Eterm value)
     id = root[0];
     value = root[1];
         old_val = root[2];
-        ASSERT(bucket == ARRAY_GET_PTR(p->dictionary, hval));
         old = *bucket;
     }
 #ifdef DEBUG
@@ -717,9 +715,7 @@ static Eterm pd_hash_put(Process *p, Eterm id, Eterm value)
     if (is_nil(old)) {
     *bucket = tpl;
     } else if (is_boxed(old)) {
-    ASSERT(is_tuple(old));
     if (!new_key) {
-            ASSERT(EQ(tuple_val(old)[1],id));
         *bucket = tpl;
         return old_val;
     } else {
@@ -728,7 +724,6 @@ static Eterm pd_hash_put(Process *p, Eterm id, Eterm value)
         hp += 2;
         *bucket = CONS(hp, tpl, tmp);
         hp += 2;
-        ASSERT(hp <= hp_limit);
     }
     } else if (is_list(old)) {
         /*
@@ -737,7 +732,6 @@ static Eterm pd_hash_put(Process *p, Eterm id, Eterm value)
     hp = HeapOnlyAlloc(p, 2);
         *bucket = CONS(hp, tpl, *bucket);
     hp += 2;
-    ASSERT(hp <= hp_limit);
     } else {
 #ifdef DEBUG
     erts_fprintf(stderr,
